@@ -22,5 +22,5 @@ class CRP_Packet:
 		return hex(zlib.crc32(value) & 0xffffffff)
 
 	def checkPacket(self):
-		return self.computeChecksum(self.data) == self.header.data_checksum
-		and self.computeChecksum(self.header) == self.header.header_checksum
+		return (self.computeChecksum(self.data) == self.header.data_checksum
+		and self.computeChecksum(self.header) == self.header.header_checksum)
