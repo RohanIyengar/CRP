@@ -18,29 +18,55 @@ class CRP_Socket:
 		self.send_window_size = 5
 		self.rcv_window_size = 5
 		self.state = CRP_Socket_State.CREATED
+		self.this_socket.settimeout(5.0)
 
 	def bind(self, address):
-		return 0
+		self.src_addr = address
+		self.this_socket.bind(self.src_addr)
+		self.state = CRP_Socket_State.BIND
+
 
 	def connect(self, address):
-		return 0
+		if self.state == CRP_Socket_State.CREATED:
+			print "Socket not bound yet"
+			return
+		elif self.state == CRP_Socket_State.CONNECTED:
+			print "Socket already connected"
+			return
+
+		self.dst_addr = address
+		self.state = CRP_Socket_State.CONNECTED
 
 	def listen(self, numConenctions):
+		# This seems hard
 		return 0
 
-	def send(self, message, flags):
-		return 0
+	def send(self, message, flags = None):
+		# Todo - pack the packet in the line below
+		packedPacket = packet
+		# Are flags really necessary?
+		if flags != None:
+			self.this_socket.sendto(packedMessage, flags, self.dst_addr)
+		else:
+			self.this_socket.sendto(packedMessage, self.dst_addr)
 
+	# Don't think we need this method anymore - as only TCP sockets support it
 	def sendAll(self, message, flags):
 		return 0
 
 	def close(self):
-		return 0
+		self.state = CRP_Socket_State.CLOSED
+		self.this_socket.close()
 
 	def shutdown(self):
-		return 0
+		self.state = CRP_Socket_State.CLOSED
+		self.this_socket.shutdown()
 
 	def accept(self):
+		#Todo - finish this method
+		if (self.this_socket.state != CRP_Socket_State.BOUND):
+			raise Exception()
+		
 		return 0
 
 	def recv(self, bufferSize, flags):
