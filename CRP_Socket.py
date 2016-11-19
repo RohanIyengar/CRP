@@ -1,5 +1,6 @@
 import socket
 import CRP_Packet
+import Queue
 from CRP_Socket_State import CRP_Socket_State
 
 class CRP_Socket:
@@ -11,6 +12,7 @@ class CRP_Socket:
 		else:
 			self.this_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
 		#Todo - Figure out what to do with the rest of the input parameters
+		this_socket.socketblocking(0);
 		self.src_addr = None
 		self.dst_addr = None
 		self.seq_num = 0
@@ -19,6 +21,9 @@ class CRP_Socket:
 		self.rcv_window_size = 5
 		self.state = CRP_Socket_State.CREATED
 		self.this_socket.settimeout(5.0)
+		self.connectionsQueue = Queue.Queue()
+		self.rcvQueue = Queue.Queue()
+		self.sendQueue = Queue.Queue()
 
 	def bind(self, address):
 		self.src_addr = address
@@ -39,6 +44,10 @@ class CRP_Socket:
 
 	def listen(self, numConenctions):
 		# This seems hard
+		# while 1:
+		# 	self.this_socket.recv()
+		# 	if self.connectionsQueue.qsize() < numConenctions: 
+
 		return 0
 
 	def send(self, message, flags = None):
@@ -70,4 +79,8 @@ class CRP_Socket:
 		return 0
 
 	def recv(self, bufferSize, flags):
+		packet, address = self.this_socket.recvfrom(bufferSize)
+		if self.state == CRP_Socket_State.CONNECTED && self.dst_addr == address:
+			if self.rcvQueue.qsize() < (2 * self.rcv_window_size):
+				rcvQueue.put(packet)
 		return 0

@@ -23,3 +23,4 @@ class CRP_Packet_Header:
 		+ str(self.fin_flag) + "\nWindow Size: " + str(self.window_size)
 		+ "\nHeader Checksum: " + str(self.header_checksum) + "\nData Checksum: "
 		+ str(self.data_checksum))
+
