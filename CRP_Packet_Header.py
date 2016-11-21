@@ -23,16 +23,36 @@ class CRP_Packet_Header:
 		+ str(self.fin_flag) + "\nWindow Size: " + str(self.window_size)
 		+ "\nHeader Checksum: " + str(self.header_checksum) + "\nData Checksum: "
 		+ str(self.data_checksum))
+	
+	def getSrcPort(self):
+		return self.src_port
+
+	def getDstPort(self):
+		return self.dst_port
+
+	def getSeqNum(self):
+		return self.seq_num
+
+	def getAckNum(self):
+		return self.ack_num
 
 	def getAckFlag(self):
 		return self.ack_flag
 		
+	def getRstFlag(self):
+		return self.rst_flag
+
 	def getSynFlag(self):
 		return self.syn_flag
-	
+
 	def getFinFlag(self):
 		return self.fin_flag
-		
-	def getSeqNum(self):
-		return self.seq_num
 
+	def getWindowSize(self):
+		return self.window_size
+
+	def getHeaderChecksum(self):
+		return self.header_checksum
+
+	def getDataChecksum(self):
+		return self.data_checksum
