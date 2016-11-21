@@ -23,7 +23,7 @@ class CRP_Packet_Header:
 		+ str(self.fin_flag) + "\nWindow Size: " + str(self.window_size)
 		+ "\nHeader Checksum: " + str(self.header_checksum) + "\nData Checksum: "
 		+ str(self.data_checksum))
-		
+
 	def getAckFlag(self):
 		return self.ack_flag
 		
@@ -35,3 +35,4 @@ class CRP_Packet_Header:
 		
 	def getSeqNum(self):
 		return self.seq_num
+

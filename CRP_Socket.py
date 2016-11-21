@@ -2,6 +2,7 @@ import socket
 import CRP_Packet
 import Queue
 import Pickle
+
 from CRP_Socket_State import CRP_Socket_State
 
 class CRP_Socket:
@@ -13,6 +14,7 @@ class CRP_Socket:
 		else:
 			self.this_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
 		#Todo - Figure out what to do with the rest of the input parameters
+		this_socket.socketblocking(0);
 		self.src_addr = None
 		self.dst_addr = None
 		self.seq_num = 0
@@ -24,7 +26,6 @@ class CRP_Socket:
 		self.connectionsQueue = Queue.queue()
 		self.rcvQueue = Queue.PriorityQueue()
 		self.sendQueue = Queue.PriorityQueue()
-		
 
 	def bind(self, address):
 		self.src_addr = address
@@ -45,7 +46,9 @@ class CRP_Socket:
 
 	def listen(self, numConenctions):
 		# This seems hard
-		
+		# while 1:
+		# 	self.this_socket.recv()
+		# 	if self.connectionsQueue.qsize() < numConenctions: 
 		return 0
 
 	def send(self, message, flags = None):

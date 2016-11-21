@@ -27,3 +27,9 @@ class CRP_Packet:
 		
 	def getHeader(self):
 		return self.crp_header
+
+	def insertData(self, data):
+		self.data = data
+
+	def setHeader(self, header):
+		self.crp_header = header
