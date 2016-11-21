@@ -1,5 +1,7 @@
 import socket
 import CRP_Packet
+import Queue
+import Pickle
 from CRP_Socket_State import CRP_Socket_State
 
 class CRP_Socket:
@@ -19,6 +21,10 @@ class CRP_Socket:
 		self.rcv_window_size = 5
 		self.state = CRP_Socket_State.CREATED
 		self.this_socket.settimeout(5.0)
+		self.connectionsQueue = Queue.queue()
+		self.rcvQueue = Queue.PriorityQueue()
+		self.sendQueue = Queue.PriorityQueue()
+		
 
 	def bind(self, address):
 		self.src_addr = address
@@ -39,11 +45,14 @@ class CRP_Socket:
 
 	def listen(self, numConenctions):
 		# This seems hard
+		
 		return 0
 
 	def send(self, message, flags = None):
 		# Todo - pack the packet in the line below
+		pickle = Pickle.pickler()
 		packedPacket = packet
+		packedMessage = pickle.dumps(packedPacket)
 		# Are flags really necessary?
 		if flags != None:
 			self.this_socket.sendto(packedMessage, flags, self.dst_addr)
@@ -56,6 +65,7 @@ class CRP_Socket:
 
 	def close(self):
 		self.state = CRP_Socket_State.CLOSED
+		#Might need to send a close packet?
 		self.this_socket.close()
 
 	def shutdown(self):
@@ -69,5 +79,24 @@ class CRP_Socket:
 		
 		return 0
 
-	def recv(self, bufferSize, flags):
-		return 0
+	def recv(self, bufferSize, flags = None):
+		pQueueNum, packet = rcvQueue.get()
+		if (len(packet) > bufferSize):
+			sio = StringIO.StringIO(packet)
+			retValue = sio.read(bufferSize)
+			rcvQueue.put((pQueueNum, sio.getValue()))
+			return retValue
+		return packet
+		
+	def recvHelper(self, bufferSize):
+		pickle = Pickle.unpickler()
+		packetString, address = self.this_socket.recvfrom(bufferSize)
+		packet = pickle.load(packetString)
+		if self.state == CRP_Socket_State.CONNECTED and self.dst_addr == address:
+			if packet.getHeader().getFinFlag() == 1:
+				close(self)
+			else:
+				if self.rcvQueue.qsize() < (2 * self.rcv_window_size):
+					rcvQueue.put((packet.getHeader().getSeqNum(), packet.getData()))
+					sendPacket = CRP_Packet(crp_header = CRP_Packet_Header(ack_num = self.ack_num, ack_flag = 1, window_size = self.window_size--))
+					
