@@ -79,8 +79,29 @@ class CRP_Socket:
 		return 0
 
 	def close(self):
-		self.state = CRP_Socket_State.CLOSED
 		#Might need to send a close packet?
+		# Need to make the close packet with fin flag
+		fin_packet_header = CRP_Packet_Header(self.src_addr[1], self.dst_addr[2])
+		fin_packet.header.fin_flag = 1
+		fin_packet = CRP_Packet(fin_packet_header)
+		timesSent = 0
+		while timesSent < 10000:
+			self.send(fin_packet)
+			try:
+				packet = self.recv(2048)
+				if not packet.check_packet():
+					print("Bad checksum. Close ACK corrupted");
+				elif packet.crp_header.ack_flag != 1:
+					print("Not the expected ACK")
+				else:
+					print ("Successful ACK")
+				timesSent += 1
+			except Exception as e:
+				timesSent += 1
+		if (timesSent == 10000):
+			print("CLosing handshake not completed")
+			return
+		self.state = CRP_Socket_State.CLOSED
 		self.this_socket.close()
 
 	def shutdown(self):
@@ -92,8 +113,7 @@ class CRP_Socket:
 		if self.this_socket.state != CRP_Socket_State.BIND:
 			raise Exception()
 		else:
-
-		
+			print "Idk yet"
 		return 0
 
 	def recv(self, bufferSize, flags = None):
@@ -124,4 +144,8 @@ class CRP_Socket:
 	# 				sendPacket = CRP_Packet(crp_header = CRP_Packet_Header(ack_num = packet.getHeader().getSeqNum(), ack_flag = 1, window_size = self.rcv_window_size-1))
 	# 				send(self, sendPacket)
 
-					
+	def getTimeout(self):
+		return self.this_socket.gettimeout()
+
+	def setTimeout(self, newTimeout):
+		self.this_socket.settimeout(newTimeout)
