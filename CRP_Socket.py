@@ -40,6 +40,9 @@ class CRP_Socket:
 		elif self.state == CRP_Socket_State.CONNECTED:
 			print "Socket already connected"
 			return
+		elif self.state == CRP_Socket_State.CLOSED:
+			print "Socket closed"
+			return
 
 		self.dst_addr = address
 		self.state = CRP_Socket_State.CONNECTED
@@ -64,10 +67,9 @@ class CRP_Socket:
 					connectionsQueue.put(dst_addr)
 		return 0
 
-	def send(self, message, flags = None):
+	def send(self, packet, flags = None):
 		# Todo - pack the packet in the line below
-		packedPacket = packet
-		packedMessage = pickle.dumps(packedPacket)
+		packedPacket = pickle.dumps(packedPacket)
 		# Are flags really necessary?
 		if flags != None:
 			self.this_socket.sendto(packedMessage, flags, self.dst_addr)
@@ -81,29 +83,10 @@ class CRP_Socket:
 	def close(self):
 		#Might need to send a close packet?
 		# Need to make the close packet with fin flag
-		fin_packet_header = CRP_Packet_Header(self.src_addr[1], self.dst_addr[2])
-		fin_packet.header.fin_flag = 1
-		fin_packet = CRP_Packet(fin_packet_header)
-		timesSent = 0
-		while timesSent < 10000:
-			self.send(fin_packet)
-			try:
-				packet = self.recv(2048)
-				if not packet.check_packet():
-					print("Bad checksum. Close ACK corrupted");
-				elif packet.crp_header.ack_flag != 1:
-					print("Not the expected ACK")
-				else:
-					print ("Successful ACK")
-				timesSent += 1
-			except Exception as e:
-				timesSent += 1
-		if (timesSent == 10000):
-			print("CLosing handshake not completed")
-			return
 		self.state = CRP_Socket_State.CLOSED
 		self.this_socket.close()
 
+	# Don't need this either tbh
 	def shutdown(self):
 		self.state = CRP_Socket_State.CLOSED
 		self.this_socket.shutdown()
@@ -117,6 +100,26 @@ class CRP_Socket:
 		return 0
 
 	def recv(self, bufferSize, flags = None):
+		recieved = False
+
+		while recieved == False:
+			try:
+				packet, destination_addr = self.this_socket.recvfrom(bufferSize)
+				packet = pickle.loads(packet)
+				if not isinstance(packet, CRP_Packet):
+					print("Recieved corrupted packet, got object of type: ", type(packet))
+					recieved = true
+				else:
+					print "Got a good packet"
+					recieved = true
+			except Exception as e:
+				print "Error recieving packet"
+				raise e
+
+		#return (destination_addr, packet)
+		return packet
+
+		'''
 		pQueueNum, packet = rcvQueue.get()
 		if pQueueNum == self.seq_num:
 			if (len(packet) > bufferSize):
@@ -127,6 +130,7 @@ class CRP_Socket:
 			return packet
 			self.seq_num += 1
 			self.rcv_window_size += 1
+		'''
 
 
 		
