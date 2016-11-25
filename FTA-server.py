@@ -61,7 +61,7 @@ def main():
 	# creating and binding rxp socket
 	global serverSocket
 	serverSocket = CRP_Controller.createAndBindSocket(ipaddress, portnumber)
-	CRP_Controller.listen(serverSocket)
+	CRP_Controller.listenForConnection(serverSocket)
 	client_info = serverSocket.connectionsQueue.get()
 
 	CRP_Controller.serverSideAccept(serverSocket, client_info)
