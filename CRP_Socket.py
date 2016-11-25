@@ -27,6 +27,7 @@ class CRP_Socket:
 		self.connectionsQueue = Queue.queue()
 		self.rcvQueue = Queue.PriorityQueue()
 		self.sendList = list.list()
+		self.MAX_PACKET_SIZE = 1024
 
 	def bind(self, address):
 		self.src_addr = address
@@ -84,7 +85,7 @@ class CRP_Socket:
 	def send(self, packet, flags = None):
 		# Todo - pack the packet in the line below
 		packedPacket = None
-		if packet.getAckFlag() == 1 or packet.getFinFlag == 1 or packet.getSynFlag() == 1:
+		if packet.getAckFlag() == 1 or packet.getFinFlag() == 1 or packet.getSynFlag() == 1:
 			packedPacket = pickle.dumps(packet)
 		else:
 			if self.state != CRP_Socket_State.CONNECTED:
