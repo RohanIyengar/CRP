@@ -86,13 +86,16 @@ class CRP_Socket:
 		packedPacket = None
 		if packet.getAckFlag() == 1 or packet.getFinFlag == 1 or packet.getSynFlag() == 1:
 			packedPacket = pickle.dumps(packet)
-		elif self.send_window_size > 0:
-			header.window_size = self.send_window_size - 1
-			self.send_window_size - 1
-			packedPacket = pickle.dumps(packet)
-			sendList.add(packet.getHeader().getSeqNum())
 		else:
-			raise Exception("Window full")
+			if self.state != CRP_Socket_State.CONNECTED:
+				raise Exception("Trying to send data without connected socket")
+			if self.send_window_size > 0:
+				header.window_size = self.send_window_size - 1
+				self.send_window_size -= 1
+				packedPacket = pickle.dumps(packet)
+				self.sendList.add(packet.getHeader().getSeqNum())
+			else:
+				raise Exception("Window full")
 			# Are flags really necessary?
 		if packedPacket != None:
 			if flags != None:
@@ -134,11 +137,20 @@ class CRP_Socket:
 				packet, destination_addr = self.this_socket.recvfrom(bufferSize)
 				packet = pickle.loads(packet)
 				if not isinstance(packet, CRP_Packet):
+					# Handle sending NACK
 					print("Received corrupted packet, got object of type: ", type(packet))
 					received = True
 				else:
-					print "Got a good packet"
 					received = True
+					if packet.getHeader().getAckFlag == 1:
+						self.sendList.remove(packet.getHeader().getAckNum())
+						self.ack_num += 1
+						self.send_window_size += 1
+					elif packet.computeChecksum(packet.getHeader()) != packet.getHeader().getHeaderChecksum() or packet.computeChecksum(packet.getData()) != packet.getHeader().getDataChecksum():
+						# Send NACK
+						print("Received corrupted packet. Checksums did not match.")
+					else:
+						print "Got a good packet"
 			except Exception as e:
 				print "Error receiving packet"
 				raise e

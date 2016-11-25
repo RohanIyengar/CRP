@@ -89,6 +89,7 @@ class CRP_Controller:
 		ack_header.ack_num = a_socket.ack_num
 		ack_packet = CRP_Packet(ack_header)
 		a_socket.send(ack_packet)
+		a_socket.ack_num += 1
 
 	def sendSYN(a_socket):
 		syn_header = CRP_Packet_Header()
@@ -155,6 +156,7 @@ class CRP_Controller:
 		return None
 
 	def sendDataPacket(self, a_socket, message):
+		#Needs to handle receiving ACKs
 		header = CRP_Packet_Header()
 		header.src_port = a_socket.src_addr[1]
 		header.dst_port = a_socket.dst_addr[1]
@@ -171,3 +173,29 @@ class CRP_Controller:
 				else:
 					raise e
 
+	def recvDataPacket(self, a_socket, buf_size):
+		recvTries = 0
+		while recvTries < 50:
+			try:
+				packet = a_socket.recv(buf_size)
+			except Exception as e:
+				if str(e) == "timed out":
+					recvTries += 1
+				else:
+					raise e
+			if packet.getHeader().getSeqNum() == a_socket.ack_num:
+				a_socket.ack_num += 1
+				sendACK(a_socket)
+			elif packet.getHeader().getSeqNum() > a_socket.ack_num:
+				finished = False
+				while not finished:
+					curr = a_socket.rcvQueue.get()
+					if curr[0] == a_socket.ack_num:
+						#Handle data sending
+						sendACK(a_socket)
+					else:
+						if a_socket.ack_num != packet.getHeader().getSeqNum():
+							a_socket.rcvQueue.put((packet.getHeader().getSeqNum(), packet))
+						else:
+							sendACK(a_socket)
+						finished = True
