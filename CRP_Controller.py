@@ -26,6 +26,17 @@ class CRP_Controller:
 
 		sendACK(clientSocket)
 
+	def listenForConnection(self, serverSocket, numConnections):
+		listenTries = 50
+		while listenTries > 0:
+			try:
+				serverSocket.listen(numConnections)
+			except Exception as e:
+				if str(e) == "timed out":
+					listenTries += 1
+				else:
+					raise e
+
 	def serverSideAccept(self, serverSocket, addr_tuple):
 		serverSocket.accept()
 		serverSocket.dst_addr = addr_tuple
@@ -68,7 +79,7 @@ class CRP_Controller:
 		raise Exception("Closing socket failed")
 
 	def setWindowSize(a_socket, size):
-		a_socket.rcv_window_size = size
+		a_socket.max_window_size = size
 
 	def sendACK(a_socket):
 		ack_header = CRP_Packet_Header()
@@ -142,3 +153,21 @@ class CRP_Controller:
 
 		#Should never get here
 		return None
+
+	def sendDataPacket(self, a_socket, message):
+		header = CRP_Packet_Header()
+		header.src_port = a_socket.src_addr[1]
+		header.dst_port = a_socket.dst_addr[1]
+		header.seq_num = a_socket.seq_num
+		a_socket.seq_num += 1
+		packet = CRP_Packet(header, message)
+		sendTries = 0
+		while sendTries < 50:
+			try:
+				a_socket.send(packet)
+			except Exception as e:
+				if str(e) == "timed out":
+					sendTries += 1
+				else:
+					raise e
+

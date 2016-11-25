@@ -21,6 +21,7 @@ class CRP_Socket:
 		self.ack_num = 0
 		self.send_window_size = 5
 		self.rcv_window_size = 5
+		self.max_window_size = 5
 		self.state = CRP_Socket_State.CREATED
 		self.this_socket.settimeout(5.0)
 		self.connectionsQueue = Queue.queue()
@@ -48,38 +49,61 @@ class CRP_Socket:
 		self.state = CRP_Socket_State.CONNECTED
 
 	def listen(self, numConnections):
-		while 1:
-			# TODO: Figure out a big enough buffer size
-			packetString, address = self.this_socket.recvfrom(bufferSize)
-			packet = pickle.load(packetString)
-			if self.state == CRP_Socket_State.CONNECTED and self.dst_addr == address:
-				if packet.getHeader().getFinFlag() == 1:
-					close(self)
-				elif packet.getHeader().getAckFlag() == 1:
-					sendList.remove(packet.getHeader().getAckNum())
-				else:
-					if self.rcvQueue.qsize() < (2 * self.rcv_window_size):
-						rcvQueue.put((packet.getHeader().getSeqNum(), packet.getData()))
-						sendPacket = CRP_Packet(crp_header = CRP_Packet_Header(ack_num = packet.getHeader().getSeqNum(), ack_flag = 1, window_size = self.rcv_window_size-1))
-						send(self, sendPacket)
-			elif self.state == CRP_Socket_State.BIND:
-				if self.connectionsQueue.qsize() < numConnections:
-					connectionsQueue.put(dst_addr)
-		return 0
+		if CRP_Socket_State == CRP_Socket_State.CREATED:
+			raise Exception("Socket not bound.")
+		try:
+			#Insert buffer size
+			packet, address = self.this_socket.recvfrom(1024)
+		except Exception as e:
+			print("timed out")
+		if packet is not None:
+			if packet.getHeader().getSynFlag() == 1:
+				if connectionsQueue.qsize < numConnections:
+					connectionsQueue.put(address)
+
+
+		# while 1:
+		# 	# TODO: Figure out a big enough buffer size
+		# 	packetString, address = self.this_socket.recvfrom(bufferSize)
+		# 	packet = pickle.load(packetString)
+		# 	if self.state == CRP_Socket_State.CONNECTED and self.dst_addr == address:
+		# 		if packet.getHeader().getFinFlag() == 1:
+		# 			close(self)
+		# 		elif packet.getHeader().getAckFlag() == 1:
+		# 			sendList.remove(packet.getHeader().getAckNum())
+		# 		else:
+		# 			if self.rcvQueue.qsize() < (2 * self.rcv_window_size):
+		# 				rcvQueue.put((packet.getHeader().getSeqNum(), packet.getData()))
+		# 				sendPacket = CRP_Packet(crp_header = CRP_Packet_Header(ack_num = packet.getHeader().getSeqNum(), ack_flag = 1, window_size = self.rcv_window_size-1))
+		# 				send(self, sendPacket)
+		# 	elif self.state == CRP_Socket_State.BIND:
+		# 		if self.connectionsQueue.qsize() < numConnections:
+		# 			connectionsQueue.put(dst_addr)
+		# return 0
 
 	def send(self, packet, flags = None):
 		# Todo - pack the packet in the line below
-		packedPacket = pickle.dumps(packedPacket)
-		# Are flags really necessary?
-		if flags != None:
-			self.this_socket.sendto(packedMessage, flags, self.dst_addr)
+		packedPacket = None
+		if packet.getAckFlag() == 1 or packet.getFinFlag == 1 or packet.getSynFlag() == 1:
+			packedPacket = pickle.dumps(packet)
+		elif self.send_window_size > 0:
+			header.window_size = self.send_window_size - 1
+			self.send_window_size - 1
+			packedPacket = pickle.dumps(packet)
+			sendList.add(packet.getHeader().getSeqNum())
 		else:
-			self.this_socket.sendto(packedMessage, self.dst_addr)
-		self.this_socket.sendto(packedPacket, self.dst_addr)
+			raise Exception("Window full")
+			# Are flags really necessary?
+		if packedPacket != None:
+			if flags != None:
+				self.this_socket.sendto(packedMessage, flags, self.dst_addr)
+			else:
+				self.this_socket.sendto(packedMessage, self.dst_addr)
+		# self.this_socket.sendto(packedPacket, self.dst_addr)
 
-	# Don't think we need this method anymore - as only TCP sockets support it
-	def sendAll(self, message, flags):
-		return 0
+	# # Don't think we need this method anymore - as only TCP sockets support it
+	# def sendAll(self, message, flags):
+	# 	return 0
 
 	def close(self):
 		#Might need to send a close packet?
@@ -103,20 +127,20 @@ class CRP_Socket:
 		return 0
 
 	def recv(self, bufferSize, flags = None):
-		recieved = False
+		received = False
 
-		while recieved == False:
+		while received == False:
 			try:
 				packet, destination_addr = self.this_socket.recvfrom(bufferSize)
 				packet = pickle.loads(packet)
 				if not isinstance(packet, CRP_Packet):
-					print("Recieved corrupted packet, got object of type: ", type(packet))
-					recieved = true
+					print("Received corrupted packet, got object of type: ", type(packet))
+					received = True
 				else:
 					print "Got a good packet"
-					recieved = true
+					received = True
 			except Exception as e:
-				print "Error recieving packet"
+				print "Error receiving packet"
 				raise e
 
 		#return (destination_addr, packet)
