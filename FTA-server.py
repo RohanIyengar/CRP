@@ -65,11 +65,15 @@ def main():
 	print ipaddress
 	# creating and binding rxp socket
 	global serverSocket
+	client_info = None
 	serverSocket = CRP_Controller.createAndBindSocket(ipaddress, portnumber)
-	CRP_Controller.listenForConnection(serverSocket, 1)
-	client_info = serverSocket.connectionsQueue.get()
+	while client_info is None:
+		CRP_Controller.listenForConnection(serverSocket, 1)
+		client_info = serverSocket.connectionsQueue.get()
+		print("Here1")
 
 	try:
+		print("here")
 		CRP_Controller.serverSideAccept(serverSocket, client_info)
 	except (UnboundLocalError, Exception):
 		print "Client did not connect within 1000 tries"

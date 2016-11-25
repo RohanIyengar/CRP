@@ -53,8 +53,9 @@ def main():
 	try:
 		inet_aton(server_ip_addr)
 	except:
+		print(server_ip_addr)
 		print "Not a valid IP Address of server"
-		sys.exit()
+		# sys.exit()
 
 	# Port number for client must be even
 	#if portnumber % 2 != 1:
@@ -63,8 +64,8 @@ def main():
 
 	client_port = 49152
 	# Need to get local host's IP Address
-	s = socket(AF_INET, SOCK_DGRAM)
-	s.connect(('8.8.8.8', 0))
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	s.connect(('8.8.8.8', 2016))
 	client_ip_address = s.getsockname()[0]
 	# creating and binding rxp socket
 	global clientSocket
