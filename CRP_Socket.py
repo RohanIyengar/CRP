@@ -60,8 +60,7 @@ class CRP_Socket:
 		if packet is not None:
 			if packet.getHeader().getSynFlag() == 1:
 				if connectionsQueue.qsize < numConnections:
-					connectionsQueue.put(address)
-
+					connectionsQueue.put(address)				
 
 		# while 1:
 		# 	# TODO: Figure out a big enough buffer size
