@@ -18,6 +18,21 @@ def terminate():
 	print "Shutting down the FTA-Server"
 	CRP_Controller.closeSocket(serverSocket)
 
+def listenThread():
+	print "Listening for client requests..."
+	while 1:
+		request = CRP_Controller.recvDataPacket(serverSocket)
+		if "GET" in str(request):
+			file_name = str(request).replace("GET: ", "")
+			print "Getting file", file_name
+
+			with open (file_name, "r") as newFile:
+				fileData = newFile.read()
+			CRP_Controller.sendDataPacket(fileData)
+		if "POST" in str(request):
+			#Todo
+			pass
+
 def main():
 	print "Starting FTA-Server"
 	# check for number of correct command line arguments
@@ -46,14 +61,14 @@ def main():
 	# creating and binding rxp socket
 	global serverSocket
 	serverSocket = CRP_Controller.createAndBindSocket(ipaddress, portnumber)
-	client_info = None # CRP_Controller.listen(serverSocket)
+	CRP_Controller.listen(serverSocket)
+	client_info = serverSocket.connectionsQueue.get()
+
 	CRP_Controller.serverSideAccept(serverSocket, client_info)
-	""" Understand + Uncomment this later
 	if serverSocket.state == CRP_Socket_State.CONNECTED:
-		thread = threading.Thread()
+		thread = threading.Thread(target = listenThread)
 		thread.start()
 		threads.append(thread)
-	"""
 
 	terminated = False
 	while not terminated:
@@ -63,11 +78,12 @@ def main():
 
 		if len(command) == 1:
 			if command[0] == "terminate":
-				termiante()
-
-			for thread in threads:
-				thread.join()
-			sys.exit()
+				termiate()
+				for thread in threads:
+					thread.join()
+				sys.exit()
+			else:
+				print "Invalid Command. Refer to README for valid commands."
 
 		elif len(command) == 2:
 			if command[0] == "window":
