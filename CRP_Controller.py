@@ -16,13 +16,12 @@ class CRP_Controller:
 		newSocket.bind(src_addr)
 		return newSocket
 
-	def clientSideConnect(self, clientSocket, ip_addr, port_num):
-		dst_addr = (ip_addr, port_num)
+	def clientSideConnect(self, clientSocket, dst_addr):
 		clientSocket.connect(dst_addr)
 
-		syn_ack = sendSYN(clientSocket)
-		client_socket.seq_num = 1000
-		client_socket.ack_num = 0
+		syn_ack = self.sendSYN(clientSocket)
+		clientSocket.seq_num = 1000
+		clientSocket.ack_num = 0
 
 		sendACK(clientSocket)
 
@@ -40,8 +39,9 @@ class CRP_Controller:
 	def serverSideAccept(self, serverSocket, addr_tuple):
 		serverSocket.accept()
 		serverSocket.dst_addr = addr_tuple
-		response = sendSYNACK(serverSocket) #Use helper method
-
+		response = self.sendSYNACK(serverSocket) #Use helper method
+        serverSocket.seq_num = 1000
+        serverSocket.ack_num = 0
 		print("Server accepted connection : " + str(addr_tuple))
 
 	def closeSocket(self, a_socket):
@@ -91,7 +91,7 @@ class CRP_Controller:
 		a_socket.send(ack_packet)
 		a_socket.ack_num += 1
 
-	def sendSYN(a_socket):
+	def sendSYN(self, a_socket):
 		syn_header = CRP_Packet_Header()
 		syn_header.src_port = a_socket.src_addr[1]
 		syn_header.dst_port = a_socket.dst_addr[1]
@@ -123,7 +123,7 @@ class CRP_Controller:
 		return None
 
 
-	def sendSYNACK(a_socket):
+	def sendSYNACK(self, a_socket):
 		synack_header = CRP_Packet_Header()
 		synack_header.src_port = a_socket.src_addr[1]
 		synack_header.dst_port = a_socket.dst_addr[1]

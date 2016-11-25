@@ -3,7 +3,7 @@ from CRP_Controller import CRP_Controller
 from CRP_Socket_State import CRP_Socket_State
 import threading
 
-from socket import inet_aton
+from socket import inet_aton, socket, AF_INET, SOCK_DGRAM
 
 windowSize = 1
 threads = []
@@ -58,13 +58,21 @@ def main():
 	#    print 'Port number for server must be odd'
 	#    sys.exit()
 
+	s = socket(AF_INET, SOCK_DGRAM)
+	s.connect(('8.8.8.8', 2016))
+	ipaddress = s.getsockname()[0]
+	print ipaddress
 	# creating and binding rxp socket
 	global serverSocket
 	serverSocket = CRP_Controller.createAndBindSocket(ipaddress, portnumber)
-	CRP_Controller.listenForConnection(serverSocket)
+	CRP_Controller.listenForConnection(serverSocket, 1)
 	client_info = serverSocket.connectionsQueue.get()
 
-	CRP_Controller.serverSideAccept(serverSocket, client_info)
+	try:
+		CRP_Controller.serverSideAccept(serverSocket, client_info)
+	except (UnboundLocalError, Exception):
+		print "Client did not connect within 1000 tries"
+		sys.exit()
 	if serverSocket.state == CRP_Socket_State.CONNECTED:
 		thread = threading.Thread(target = listenThread)
 		thread.start()
@@ -95,4 +103,4 @@ def main():
 			else:
 				print "Invalid Command. Refer to README for valid commands."
 
-#main()
+main()

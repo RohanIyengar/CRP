@@ -3,7 +3,10 @@ from CRP_Controller import CRP_Controller
 from CRP_Socket_State import CRP_Socket_State
 #import CRP
 
-from socket import inet_aton
+from socket import inet_aton, socket, AF_INET, SOCK_DGRAM
+
+global CRP_Controller
+CRP_Controller = CRP_Controller()
 
 def connect():
 	print "Connecting to CRP Server..."
@@ -61,14 +64,14 @@ def main():
 
 	client_port = 49152
 	# Need to get local host's IP Address
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	s.connect('8.8.8.8', 0)
+	s = socket(AF_INET, SOCK_DGRAM)
+	s.connect(('8.8.8.8', 0))
 	client_ip_address = s.getsockname()[0]
 	# creating and binding rxp socket
 	global clientSocket
 	clientSocket = CRP_Controller.createAndBindSocket(client_ip_address, client_port)
 	clientSocket.dst_addr = (server_ip_addr, portnumber)
-	CRP_Controller.clientSideConnect(serverSocket)
+	CRP_Controller.clientSideConnect(clientSocket, clientSocket.dst_addr)
 	client_info = serverSocket.connectionsQueue.get
 
 	terminated = False
@@ -101,3 +104,5 @@ def main():
 				post(file_name)
 			else:
 				print "Invalid Command. Refer to README for valid commands."
+
+main()

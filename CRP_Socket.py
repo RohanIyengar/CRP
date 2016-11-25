@@ -7,14 +7,14 @@ from CRP_Socket_State import CRP_Socket_State
 
 class CRP_Socket:
 
-	def __init__(self, ipVersion, packetType, protocolNumber):
+	def __init__(self, ipVersion = "IPv4", packetType = None, protocolNumber= None):
 		# Use this_socket to not collide with socket class namespace
 		if ipVersion == "IPv6":
 			self.this_socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
 		else:
 			self.this_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
 		#Todo - Figure out what to do with the rest of the input parameters
-		this_socket.socketblocking(0);
+		# this_socket.socketblocking(0);
 		self.src_addr = None
 		self.dst_addr = None
 		self.seq_num = 0
@@ -24,9 +24,9 @@ class CRP_Socket:
 		self.max_window_size = 5
 		self.state = CRP_Socket_State.CREATED
 		self.this_socket.settimeout(5.0)
-		self.connectionsQueue = Queue.queue()
+		self.connectionsQueue = Queue.Queue()
 		self.rcvQueue = Queue.PriorityQueue()
-		self.sendList = list.list()
+		self.sendList = list()
 		self.MAX_PACKET_SIZE = 1024
 
 	def bind(self, address):
@@ -50,17 +50,22 @@ class CRP_Socket:
 		self.state = CRP_Socket_State.CONNECTED
 
 	def listen(self, numConnections):
-		if CRP_Socket_State == CRP_Socket_State.CREATED:
+		if self.state == CRP_Socket_State.CREATED:
 			raise Exception("Socket not bound.")
 		try:
 			#Insert buffer size
 			packet, address = self.this_socket.recvfrom(1024)
+			if packet is not None:
+				println("Here1")
+				if packet.getHeader().getSynFlag() == 1:
+					if connectionsQueue.qsize < numConnections:
+						connectionsQueue.put(address)
 		except Exception as e:
 			print("timed out")
-		if packet is not None:
-			if packet.getHeader().getSynFlag() == 1:
-				if connectionsQueue.qsize < numConnections:
-					connectionsQueue.put(address)				
+		# if packet is not None:
+		# 	if packet.getHeader().getSynFlag() == 1:
+		# 		if connectionsQueue.qsize < numConnections:
+		# 			connectionsQueue.put(address)				
 
 		# while 1:
 		# 	# TODO: Figure out a big enough buffer size
@@ -84,7 +89,7 @@ class CRP_Socket:
 	def send(self, packet, flags = None):
 		# Todo - pack the packet in the line below
 		packedPacket = None
-		if packet.getAckFlag() == 1 or packet.getFinFlag() == 1 or packet.getSynFlag() == 1:
+		if packet.getHeader().getAckFlag() == 1 or packet.getHeader().getFinFlag() == 1 or packet.getHeader().getSynFlag() == 1:
 			packedPacket = pickle.dumps(packet)
 		else:
 			if self.state != CRP_Socket_State.CONNECTED:
@@ -99,9 +104,9 @@ class CRP_Socket:
 			# Are flags really necessary?
 		if packedPacket != None:
 			if flags != None:
-				self.this_socket.sendto(packedMessage, flags, self.dst_addr)
+				self.this_socket.sendto(packedPacket, flags, self.dst_addr)
 			else:
-				self.this_socket.sendto(packedMessage, self.dst_addr)
+				self.this_socket.sendto(packedPacket, self.dst_addr)
 		# self.this_socket.sendto(packedPacket, self.dst_addr)
 
 	# # Don't think we need this method anymore - as only TCP sockets support it
@@ -121,7 +126,7 @@ class CRP_Socket:
 
 	def accept(self):
 		#Todo - finish this method
-		if self.this_socket.state != CRP_Socket_State.BIND:
+		if self.state != CRP_Socket_State.BIND:
 			raise Exception("Socket not bound yet")
 		else:
 			self.seq_num = 0
