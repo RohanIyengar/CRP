@@ -191,9 +191,8 @@ class CRP_Controller:
 			try:
 				packet, address = a_socket.recv(a_socket.MAX_PACKET_SIZE)
 				ackQueue.remove(packet.getHeader().getSeqNum())
-
-
-
+			except Exception as e:
+				raise e
 
 	def recvDataPacket(self, a_socket, buf_size):
 		buff = ""
