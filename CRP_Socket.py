@@ -75,6 +75,7 @@ class CRP_Socket:
 			self.this_socket.sendto(packedMessage, flags, self.dst_addr)
 		else:
 			self.this_socket.sendto(packedMessage, self.dst_addr)
+		self.this_socket.sendto(packedPacket, self.dst_addr)
 
 	# Don't think we need this method anymore - as only TCP sockets support it
 	def sendAll(self, message, flags):
@@ -94,9 +95,11 @@ class CRP_Socket:
 	def accept(self):
 		#Todo - finish this method
 		if self.this_socket.state != CRP_Socket_State.BIND:
-			raise Exception()
+			raise Exception("Socket not bound yet")
 		else:
-			print "Idk yet"
+			self.seq_num = 0
+			self.ack_num = 1000
+			self.state = CRP_Socket_State.CONNECTED
 		return 0
 
 	def recv(self, bufferSize, flags = None):
