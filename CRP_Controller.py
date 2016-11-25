@@ -1,6 +1,7 @@
 from CRP_Socket import CRP_Socket
 from CRP_Packet import CRP_Packet
 from CRP_Packet_Header import CRP_Packet_Header
+import sys
 
 from collections import deque
 import Queue	
@@ -26,15 +27,20 @@ class CRP_Controller:
 		sendACK(clientSocket)
 
 	def listenForConnection(self, serverSocket, numConnections):
-		listenTries = 50
+		listenTries = 2
 		while listenTries > 0:
 			try:
 				serverSocket.listen(numConnections)
 			except Exception as e:
 				if str(e) == "timed out":
-					listenTries += 1
+					listenTries -= 1
 				else:
-					raise e
+					#print(str(e))
+					print("Waiting for client to connect, still have %s tries" % str(listenTries))
+					listenTries-= 1
+					if listenTries == 0:
+						print (str(e))
+						sys.exit()
 
 	def serverSideAccept(self, serverSocket, addr_tuple):
 		serverSocket.accept()
@@ -54,6 +60,7 @@ class CRP_Controller:
 		
 		sendTries = 0
 		#stage = 0
+		# Send fin expect to receive back ack
 		while sendTries < 50:
 			a_socket.send(fin_packet)
 

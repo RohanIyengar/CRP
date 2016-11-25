@@ -3,10 +3,9 @@ from CRP_Controller import CRP_Controller
 from CRP_Socket_State import CRP_Socket_State
 #import CRP
 
-from socket import inet_aton, socket, AF_INET, SOCK_DGRAM
-
 global CRP_Controller
 CRP_Controller = CRP_Controller()
+import socket
 
 def connect():
 	print "Connecting to CRP Server..."
@@ -104,5 +103,4 @@ def main():
 				post(file_name)
 			else:
 				print "Invalid Command. Refer to README for valid commands."
-
 main()

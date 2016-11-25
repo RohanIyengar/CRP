@@ -7,14 +7,14 @@ from CRP_Socket_State import CRP_Socket_State
 
 class CRP_Socket:
 
-	def __init__(self, ipVersion = "IPv4", packetType = None, protocolNumber= None):
+	def __init__(self, ipVersion = "IPv4", packetType = None, protocolNumber = None):
 		# Use this_socket to not collide with socket class namespace
 		if ipVersion == "IPv6":
 			self.this_socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
 		else:
 			self.this_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);
 		#Todo - Figure out what to do with the rest of the input parameters
-		# this_socket.socketblocking(0);
+		# self.this_socket.socketblocking(0);
 		self.src_addr = None
 		self.dst_addr = None
 		self.seq_num = 0
@@ -26,7 +26,7 @@ class CRP_Socket:
 		self.this_socket.settimeout(5.0)
 		self.connectionsQueue = Queue.Queue()
 		self.rcvQueue = Queue.PriorityQueue()
-		self.sendList = list()
+		self.sendList = [] 
 		self.MAX_PACKET_SIZE = 1024
 
 	def bind(self, address):
