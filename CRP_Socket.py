@@ -138,7 +138,8 @@ class CRP_Socket:
 
         while received == False:
             try:
-                packet, destination_addr = self.this_socket.recvfrom(bufferSize)
+                packet, destination_addr = self.this_socket.recvfrom(int(bufferSize))
+                print "Packet received"
                 packet = pickle.loads(packet)
                 if not isinstance(packet, CRP_Packet):
                     # Handle sending NACK
