@@ -4,7 +4,6 @@ from CRP_Socket_State import CRP_Socket_State
 import threading
 
 import socket
-
 windowSize = 1
 threads = []
 global CRP_Controller
@@ -22,11 +21,11 @@ def terminate():
 def listenThread():
 	#print "Listening for client requests..."
 	while 1:
+		#print "HI"
 		request = CRP_Controller.recvDataPacket(serverSocket, 1024)
 		if "GET" in str(request):
 			file_name = str(request).replace("GET: ", "")
 			print "Getting file", file_name
-
 			with open (file_name, "r") as newFile:
 				fileData = newFile.read()
 			CRP_Controller.sendDataPacket(fileData)
@@ -73,6 +72,7 @@ def main():
 		# client_info = serverSocket.connectionsQueue.get()
 		# print str(serverSocket.connectionsQueue.qsize())
 
+	global thread_done
 	try:
 		print("here")
 		CRP_Controller.serverSideAccept(serverSocket, client_info)
@@ -80,9 +80,10 @@ def main():
 		print "Client did not connect within 1000 tries"
 		sys.exit()
 	if serverSocket.state == CRP_Socket_State.CONNECTED:
+		thread_done = False
 		thread = threading.Thread(target = listenThread)
+		thread.daemon = True
 		thread.start()
-		threads.append(thread)
 
 	terminated = False
 	while not terminated:
@@ -93,8 +94,9 @@ def main():
 		if len(command) == 1:
 			if command[0] == "terminate":
 				terminate()
+				terminated = True
 				for thread in threads:
-					thread._Thread_stop()
+					thread.join()
 				sys.exit()
 			else:
 				print "Invalid Command. Refer to README for valid commands."
