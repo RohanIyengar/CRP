@@ -74,7 +74,6 @@ def main():
 		# print str(serverSocket.connectionsQueue.qsize())
 
 	try:
-		print("here")
 		CRP_Controller.serverSideAccept(serverSocket, client_info)
 	except (UnboundLocalError, Exception):
 		print "Client did not connect within 1000 tries"
@@ -93,8 +92,8 @@ def main():
 		if len(command) == 1:
 			if command[0] == "terminate":
 				terminate()
-				for thread in threads:
-					thread._Thread_stop()
+				# for thread in threads:
+				# 	thread.exit()
 				sys.exit()
 			else:
 				print "Invalid Command. Refer to README for valid commands."

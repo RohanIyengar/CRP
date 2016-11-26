@@ -25,7 +25,6 @@ class CRP_Controller:
         clientSocket.ack_num = 0
 
         self.sendACK(clientSocket)
-        print "ACK sent"
 
     def listenForConnection(self, serverSocket, numConnections):
         listenTries = 15
@@ -114,7 +113,6 @@ class CRP_Controller:
         sendTries = 0
         while sendTries < 50:
             a_socket.send(syn_packet)
-            print "Sent SYN"
             try:
                 packet, address = a_socket.recv(1024) #Need to define max size
                 sendTries = 50
@@ -153,11 +151,10 @@ class CRP_Controller:
         sendTries = 0
         while sendTries < 50:
             a_socket.send(synack_packet)
-            print "Tries to receive an ACK back"
             try:
                 packet, address = a_socket.recv(1024) #Need to define max size
                 sendTries = 50
-                print("Received SYNACK")
+                print("Received SYN/ACK")
 
                 if not packet.checkPacket():
                     sendTries+=1
