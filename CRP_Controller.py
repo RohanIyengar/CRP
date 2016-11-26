@@ -124,6 +124,8 @@ class CRP_Controller:
             except Exception as e:
                 if str(e) == "timed out":
                     sendTries += 1
+                elif sendTries < 50:
+                    sendTries += 1
                 else:
                     raise e
 

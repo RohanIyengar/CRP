@@ -6,19 +6,22 @@ import socket
 #basic send. Should fail cause sockets are not connected
 def test_basic_sending():
     CRP = CRP_Controller()
-    print "Testing basic connection as a client"
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(('8.8.8.8', 2016))
     ipaddress = s.getsockname()[0]
-    client = CRP.createAndBindSocket("127.0.0.1", 5000)
-    # server = CRP.createAndBindSocket("127.0.0.1", 5001)
-    print "Client connecting"
-    CRP.clientSideConnect(client, (ipaddress, 5001))
-    print "Client connected"
-    CRP.sendDataPacket(client, "Hello, World!  This is a big test.   Test Test T")
+    print "Testing basic connection as a server"
+    #client = CRP.createAndBindSocket("127.0.0.1", 5000)
+    server = CRP.createAndBindSocket(ipaddress, 5001)
+    client_info = None
+    while client_info is None:
+        print "Server is listening"
+        CRP.listenForConnection(server, 1)
+        client_info = serverSocket.connectionsQueue.get()
+        print("Here1")
+
+    print "Server receiving data"
     response = RxP.receiveData(server, 999999)
     print "Received data: ", response
     CRP.closeSocket(server)
-    CRP.closeSocket(client)
 
 test_basic_sending()
