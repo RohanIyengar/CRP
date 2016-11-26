@@ -99,7 +99,7 @@ class CRP_Socket:
         if self.state != CRP_Socket_State.BIND:
             raise Exception("Socket not bound yet")
         else:
-            self.seq_num = 0
+            self.seq_num = 1000
             self.ack_num = 1000
             self.state = CRP_Socket_State.CONNECTED
         return 0

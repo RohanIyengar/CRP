@@ -14,9 +14,11 @@ def connect():
 
 def get(file):
 	print "Download file from Server named " + str(file)
-	CRP_Controller.sendDataPacket(clientSocket)
-	file_response = CRP_Controller.receiveDataPacket()
-	print "Received file: ", file_response
+	sendString = "GET: " + file
+	CRP_Controller.sendDataPacket(clientSocket, sendString)
+	print sendString
+	file_response = CRP_Controller.recvDataPacket(clientSocket, clientSocket.MAX_PACKET_SIZE)
+	print "Received file: ", str(file_response)
 
 def post(file):
 	print "Uploading file to Server named " + str(file)
@@ -26,7 +28,7 @@ def disconnect():
 	clientSocket.close()
 
 def window(newSize):
-	print "Changing window size to " + str(windowSize)
+	print "Changing window size to " + str(newSize)
 	clientSocket.rcv_window_size = newSize
 
 def main():
@@ -99,6 +101,7 @@ def main():
 			elif command[0] == "get":
 				file_name = str(command[1])
 				get(file_name)
+				print "Getting file"
 			elif command[0] == "post":
 				file_name= str(command[1])
 				post(file_name)

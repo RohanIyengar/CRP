@@ -2,7 +2,7 @@ from CRP_Socket import CRP_Socket
 from CRP_Packet import CRP_Packet
 from CRP_Packet_Header import CRP_Packet_Header
 import sys
-
+import math
 from collections import deque
 import Queue    
 
@@ -22,7 +22,7 @@ class CRP_Controller:
 
         syn_ack = self.sendSYN(clientSocket)
         clientSocket.seq_num = 1000
-        clientSocket.ack_num = 0
+        clientSocket.ack_num = 1000
 
         self.sendACK(clientSocket)
 
@@ -177,9 +177,11 @@ class CRP_Controller:
 
     def sendDataPacket(self, a_socket, message):
         #Edit for window size
-        numPackets = math.ceil(len(message) / a_socket.MAX_PACKET_SIZE)
-        sendQueue = Queue.queue()
-        ackQueue = list.list()
+        print message
+        numPackets = int(math.ceil((float(len(message)) / float(a_socket.MAX_PACKET_SIZE))))
+        sendQueue = Queue.Queue()
+        ackQueue = []
+        print numPackets
         for i in range(1,numPackets-1):
             header = CRP_Packet_Header()
             header.src_port = a_socket.src_addr[1]
@@ -188,8 +190,10 @@ class CRP_Controller:
             a_socket.seq_num += 1
             if i != numPackets - 1:
                 data = message[(i - 1)*a_socket.MAX_PACKET_SIZE:(a_socket.MAX_PACKET_SIZE*i)-1]
+                print str(data)
             else:
                 data = message[(i - 1)*a_socket.MAX_PACKET_SIZE:end]
+                print str(data)
             packet = CRP_Packet(header, data)
             sendQueue.put(packet)
         for j in range(sendQueue.qsize()):
@@ -207,7 +211,7 @@ class CRP_Controller:
                         raise e
             if sent is True:
                 ackQueue.add((currPacket.getHeader().getSeqNum(),currPacket))
-        while ackQueue.qsize() > 0:
+        while len(ackQueue) > 0:
             try:
                 packet, address = a_socket.recv(a_socket.MAX_PACKET_SIZE)
                 ackQueue.remove(packet.getHeader().getSeqNum())
@@ -219,6 +223,7 @@ class CRP_Controller:
         recvTries = 0
         packet = None
         while recvTries < 50:
+            print buff
             try:
                 packet, address = a_socket.recv(int(buf_size))
             except Exception as e:
@@ -226,6 +231,7 @@ class CRP_Controller:
                     recvTries += 1
                 #else:
                 #    raise e
+            print "Packet: " + str(packet)
             if packet is not None:
                 print str(packet.getData())
                 if packet.getHeader().getSeqNum() == a_socket.ack_num:

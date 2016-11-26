@@ -10,7 +10,7 @@ global CRP_Controller
 CRP_Controller = CRP_Controller()
 
 def window(newSize):
-	print "Changing window size to " + str(windowSize)
+	print "Changing window size to " + str(newSize)
 	windowSize = newSize
 
 def terminate():
@@ -21,20 +21,24 @@ def terminate():
 def listenThread():
 	#print "Listening for client requests..."
 	while 1:
-		#print "HI"
+		print "here"
 		request = CRP_Controller.recvDataPacket(serverSocket, 1024)
+		print "Request: " + str(request)
 		if "GET" in str(request):
+			print "HERE"
 			file_name = str(request).replace("GET: ", "")
 			print "Getting file", file_name
 			with open (file_name, "r") as newFile:
 				fileData = newFile.read()
-			CRP_Controller.sendDataPacket(fileData)
+			# print str(fileData)
+			CRP_Controller.sendDataPacket(serverSocket, fileData)
 		if "POST" in str(request):
 			#Todo
 			pass
 
 def main():
 	print "Starting FTA-Server"
+	
 	# check for number of correct command line arguments
 	if len(sys.argv) != 2:
 		print ('Please enter arguments in the correct format: X' + 
