@@ -10,7 +10,7 @@ import socket
 def connect():
 	print "Connecting to CRP Server..."
 	ip_addr, port = clientSocket.dst_addr
-	CRP_Controller.clientSideConnect(clientSocket, ip_addr, port)
+	CRP_Controller.clientSideConnect(clientSocket, (ip_addr, port))
 
 def get(file):
 	print "Download file from Server named " + str(file)
@@ -71,8 +71,8 @@ def main():
 	global clientSocket
 	clientSocket = CRP_Controller.createAndBindSocket(client_ip_address, client_port)
 	clientSocket.dst_addr = (server_ip_addr, portnumber)
-	CRP_Controller.clientSideConnect(clientSocket, clientSocket.dst_addr)
-	client_info = serverSocket.connectionsQueue.get()
+	# CRP_Controller.clientSideConnect(clientSocket, clientSocket.dst_addr)
+	# client_info = serverSocket.connectionsQueue.get()
 
 	terminated = False
 	while not terminated:

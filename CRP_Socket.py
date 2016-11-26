@@ -23,7 +23,7 @@ class CRP_Socket:
         self.rcv_window_size = 5
         self.max_window_size = 5
         self.state = CRP_Socket_State.CREATED
-        self.this_socket.settimeout(5.0)
+        self.this_socket.settimeout(1.0)
         self.connectionsQueue = Queue.Queue()
         self.rcvQueue = Queue.PriorityQueue()
         self.sendList = [] 
@@ -55,17 +55,22 @@ class CRP_Socket:
         try:
             #Insert buffer size
             message, address = self.this_socket.recvfrom(1024)
-            print "Listen"
+            # print "Listen"
             packet = pickle.loads(message)
-            print "INstance " + type(message)
-            print str(packet)
+            # print "INstance " + type(message)
+            # print str(packet)
+            # print "SYNFLAG: " + str(packet.crp_header.syn_flag)
             if packet is not None:
                 print "Picked up Packet"
-                print "SYN FLAG: " + packet.getHeader().getSynFlag()
-                if packet.getHeader().getSynFlag() == 1:
-                    if connectionsQueue.qsize < numConnections:
-                        connectionsQueue.put(address)
-                        print "Queue: " + connectionsQueue.qsize()
+                # print "SYN FLAG: " + packet.getHeader().getSynFlag()
+                if packet.crp_header.syn_flag == 1:
+                    return address
+                    # print "qsize: " + str(self.connectionsQueue.qsize())
+                    # if self.connectionsQueue.qsize() < numConnections:
+                    #     print str(address)
+                    #     self.connectionsQueue.put(address)
+                    #     print "Queue: " + connectionsQueue.qsize()
+                    #     return True
         except Exception as e:
             print("timed out")
 
@@ -120,36 +125,40 @@ class CRP_Socket:
         return 0
 
     def recv(self, bufferSize, flags = None):
-        print "Here"
         received = False
 
         while received == False:
             try:
-                print "Here2"
+                # print self.dst_addr
+                # print self.src_addr
                 message, destination_addr = self.this_socket.recvfrom(bufferSize)
-                print str(message)
+                # print str(message)
                 if message is None:
                     print "Packet is None"
                 else:
+                    received = True
                     print "Packet received"
-                packet = pickle.loads(message)
-                if not isinstance(packet, CRP_Packet):
-                    # Handle sending NACK
-                    print("Received corrupted packet, got object of type: ", type(packet))
-                    received = True
-                else:
-                    received = True
-                    if packet.getHeader().getAckFlag == 1:
-                        self.sendList.remove(packet.getHeader().getAckNum())
-                        self.ack_num += 1
-                        self.send_window_size += 1
-                    elif packet.computeChecksum(packet.getHeader()) != packet.getHeader().getHeaderChecksum() or packet.computeChecksum(packet.getData()) != packet.getHeader().getDataChecksum():
-                        # Send NACK
-                        print("Received corrupted packet. Checksums did not match.")
+                    packet = pickle.loads(message)
+                    print str(packet)
+                    sleep(1)
+                    if not isinstance(packet, CRP_Packet.CRP_Packet):
+                        # Handle sending NACK
+                        print("Received corrupted packet, got object of type: ", type(packet))
+                        received = True
                     else:
-                        print "Got a good packet"
+                        received = True
+                        if packet.getHeader().getAckFlag == 1:
+                            print "Receive ACK Packet"
+                            self.sendList.remove(packet.getHeader().getAckNum())
+                            self.ack_num += 1
+                            self.send_window_size += 1
+                        elif not packet.checkPacket():
+                            # Send NACK
+                            print("Received corrupted packet. Checksums did not match.")
+                        else:
+                            print "Got a good packet"
             except Exception as e:
-                print "Error receiving packet"
+                # print "Error receiving packet"
                 raise e
 
         #return (destination_addr, packet)

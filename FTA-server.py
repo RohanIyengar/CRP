@@ -16,12 +16,13 @@ def window(newSize):
 
 def terminate():
 	print "Shutting down the FTA-Server"
-	CRP_Controller.closeSocket(serverSocket)
+	CRP_Controller.closeServer(serverSocket)
+
 
 def listenThread():
-	print "Listening for client requests..."
+	#print "Listening for client requests..."
 	while 1:
-		request = CRP_Controller.recvDataPacket(serverSocket)
+		request = CRP_Controller.recvDataPacket(serverSocket, 1024)
 		if "GET" in str(request):
 			file_name = str(request).replace("GET: ", "")
 			print "Getting file", file_name
@@ -68,9 +69,9 @@ def main():
 	client_info = None
 	serverSocket = CRP_Controller.createAndBindSocket(ipaddress, portnumber)
 	while client_info is None:
-		CRP_Controller.listenForConnection(serverSocket, 1)
-		client_info = serverSocket.connectionsQueue.get()
-		print("Here1")
+		client_info = CRP_Controller.listenForConnection(serverSocket, 1)
+		# client_info = serverSocket.connectionsQueue.get()
+		# print str(serverSocket.connectionsQueue.qsize())
 
 	try:
 		print("here")
@@ -91,9 +92,9 @@ def main():
 
 		if len(command) == 1:
 			if command[0] == "terminate":
-				termiate()
+				terminate()
 				for thread in threads:
-					thread.join()
+					thread._Thread_stop()
 				sys.exit()
 			else:
 				print "Invalid Command. Refer to README for valid commands."

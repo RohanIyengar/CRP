@@ -25,12 +25,14 @@ class CRP_Controller:
         clientSocket.ack_num = 0
 
         self.sendACK(clientSocket)
+        print "ACK sent"
 
     def listenForConnection(self, serverSocket, numConnections):
-        listenTries = 2
+        listenTries = 15
+
         while listenTries > 0:
             try:
-                serverSocket.listen(numConnections)
+                return serverSocket.listen(numConnections)
             except Exception as e:
                 if str(e) == "timed out":
                     listenTries -= 1
@@ -83,6 +85,10 @@ class CRP_Controller:
         #Should never get here
         raise Exception("Closing socket failed")
 
+    def closeServer(self, a_socket):
+        a_socket.close()
+        print "Server has been terminated."
+
     def setWindowSize(a_socket, size):
         a_socket.max_window_size = size
 
@@ -110,7 +116,8 @@ class CRP_Controller:
             a_socket.send(syn_packet)
             print "Sent SYN"
             try:
-                packet = a_socket.recv(1024) #Need to define max size
+                packet, address = a_socket.recv(1024) #Need to define max size
+                sendTries = 50
                 print("Received SYN")
 
                 if not packet.checkPacket():
@@ -146,9 +153,10 @@ class CRP_Controller:
         sendTries = 0
         while sendTries < 50:
             a_socket.send(synack_packet)
-
+            print "Tries to receive an ACK back"
             try:
-                packet = a_socket.recv(1024) #Need to define max size
+                packet, address = a_socket.recv(1024) #Need to define max size
+                sendTries = 50
                 print("Received SYNACK")
 
                 if not packet.checkPacket():
@@ -161,6 +169,8 @@ class CRP_Controller:
                     return packet
             except Exception as e:
                 if str(e) == "timed out":
+                    sendTries += 1
+                elif sendTries < 50:
                     sendTries += 1
                 else:
                     raise e
@@ -210,31 +220,35 @@ class CRP_Controller:
     def recvDataPacket(self, a_socket, buf_size):
         buff = ""
         recvTries = 0
+        packet = None
         while recvTries < 50:
             try:
-                packet, address = a_socket.recv(buf_size)
+                packet, address = a_socket.recv(int(buf_size))
             except Exception as e:
                 if str(e) == "timed out":
                     recvTries += 1
-                else:
-                    raise e
-            if packet.getHeader().getSeqNum() == a_socket.ack_num:
-                a_socket.ack_num += 1
-                sendACK(a_socket)
-                buff += packet.getData()
-            elif packet.getHeader().getSeqNum() > a_socket.ack_num:
-                finished = False
-                while not finished:
-                    curr = a_socket.rcvQueue.get()
-                    if curr[0] == a_socket.ack_num:
-                        #Handle data sending
-                        sendACK(a_socket)
-                        buff += curr[1].getData()
-                    else:
-                        if a_socket.ack_num != packet.getHeader().getSeqNum():
-                            a_socket.rcvQueue.put((packet.getHeader().getSeqNum(), packet))
-                        else:
+                #else:
+                #    raise e
+            if packet is not None:
+                print str(packet.getData())
+                if packet.getHeader().getSeqNum() == a_socket.ack_num:
+                    a_socket.ack_num += 1
+                    sendACK(a_socket)
+                    buff += str(packet.getData())
+                elif packet.getHeader().getSeqNum() > a_socket.ack_num:
+                    finished = False
+                    while not finished:
+                        curr = a_socket.rcvQueue.get()
+                        if curr[0] == a_socket.ack_num:
+                            #Handle data sending
                             sendACK(a_socket)
-                            buff += packet.getData()
-                        finished = True
+                            buff += str(curr[1].getData())
+                        else:
+                            if a_socket.ack_num != packet.getHeader().getSeqNum():
+                                a_socket.rcvQueue.put((packet.getHeader().getSeqNum(), packet))
+                            else:
+                                sendACK(a_socket)
+                                buff += str(packet.getData())
+                            finished = True
+
         return buff
