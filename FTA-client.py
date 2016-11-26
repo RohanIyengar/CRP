@@ -72,7 +72,7 @@ def main():
 	clientSocket = CRP_Controller.createAndBindSocket(client_ip_address, client_port)
 	clientSocket.dst_addr = (server_ip_addr, portnumber)
 	CRP_Controller.clientSideConnect(clientSocket, clientSocket.dst_addr)
-	client_info = serverSocket.connectionsQueue.get
+	client_info = serverSocket.connectionsQueue.get()
 
 	terminated = False
 	while not terminated:

@@ -54,41 +54,26 @@ class CRP_Socket:
             raise Exception("Socket not bound.")
         try:
             #Insert buffer size
-            packet, address = self.this_socket.recvfrom(1024)
+            message, address = self.this_socket.recvfrom(1024)
+            print "Listen"
+            packet = pickle.loads(message)
+            print "INstance " + type(message)
+            print str(packet)
             if packet is not None:
+                print "Picked up Packet"
+                print "SYN FLAG: " + packet.getHeader().getSynFlag()
                 if packet.getHeader().getSynFlag() == 1:
                     if connectionsQueue.qsize < numConnections:
                         connectionsQueue.put(address)
+                        print "Queue: " + connectionsQueue.qsize()
         except Exception as e:
             print("timed out")
-        # if packet is not None:
-        #   if packet.getHeader().getSynFlag() == 1:
-        #       if connectionsQueue.qsize < numConnections:
-        #           connectionsQueue.put(address)               
-
-        # while 1:
-        #   # TODO: Figure out a big enough buffer size
-        #   packetString, address = self.this_socket.recvfrom(bufferSize)
-        #   packet = pickle.load(packetString)
-        #   if self.state == CRP_Socket_State.CONNECTED and self.dst_addr == address:
-        #       if packet.getHeader().getFinFlag() == 1:
-        #           close(self)
-        #       elif packet.getHeader().getAckFlag() == 1:
-        #           sendList.remove(packet.getHeader().getAckNum())
-        #       else:
-        #           if self.rcvQueue.qsize() < (2 * self.rcv_window_size):
-        #               rcvQueue.put((packet.getHeader().getSeqNum(), packet.getData()))
-        #               sendPacket = CRP_Packet(crp_header = CRP_Packet_Header(ack_num = packet.getHeader().getSeqNum(), ack_flag = 1, window_size = self.rcv_window_size-1))
-        #               send(self, sendPacket)
-        #   elif self.state == CRP_Socket_State.BIND:
-        #       if self.connectionsQueue.qsize() < numConnections:
-        #           connectionsQueue.put(dst_addr)
-        # return 0
 
     def send(self, packet, flags = None):
         # Todo - pack the packet in the line below
         packedPacket = None
         if packet.getHeader().getAckFlag() == 1 or packet.getHeader().getFinFlag() == 1 or packet.getHeader().getSynFlag() == 1:
+            # print str(packet)
             packedPacket = pickle.dumps(packet)
         else:
             if self.state != CRP_Socket_State.CONNECTED:
@@ -106,6 +91,7 @@ class CRP_Socket:
                 self.this_socket.sendto(packedPacket, flags, self.dst_addr)
             else:
                 self.this_socket.sendto(packedPacket, self.dst_addr)
+        # print str(packedPacket)
         # self.this_socket.sendto(packedPacket, self.dst_addr)
 
     # # Don't think we need this method anymore - as only TCP sockets support it
@@ -134,12 +120,19 @@ class CRP_Socket:
         return 0
 
     def recv(self, bufferSize, flags = None):
+        print "Here"
         received = False
 
         while received == False:
             try:
-                packet, destination_addr = self.this_socket.recvfrom(bufferSize)
-                packet = pickle.loads(packet)
+                print "Here2"
+                message, destination_addr = self.this_socket.recvfrom(bufferSize)
+                print str(message)
+                if message is None:
+                    print "Packet is None"
+                else:
+                    print "Packet received"
+                packet = pickle.loads(message)
                 if not isinstance(packet, CRP_Packet):
                     # Handle sending NACK
                     print("Received corrupted packet, got object of type: ", type(packet))

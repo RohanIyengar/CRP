@@ -24,7 +24,7 @@ class CRP_Controller:
         clientSocket.seq_num = 1000
         clientSocket.ack_num = 0
 
-        sendACK(clientSocket)
+        self.sendACK(clientSocket)
 
     def listenForConnection(self, serverSocket, numConnections):
         listenTries = 2

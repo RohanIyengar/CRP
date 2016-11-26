@@ -14,7 +14,7 @@ class CRP_Packet:
 		self.crp_header.data_checksum = self.computeChecksum(str(self.data))
 
 	def __str__(self):
-		return str(self.crp_header) + "\nData: " + self.data
+		return str(self.crp_header) + "\nData: " + str(self.data)
 
 	# Used crc32 converted to unsigned for consistent checksum calculation
 	# Reference: http://stackoverflow.com/questions/30092226/how-to-calculate-crc32-with-python-to-match-online-results
