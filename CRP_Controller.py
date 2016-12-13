@@ -1,6 +1,7 @@
 from CRP_Socket import CRP_Socket
 from CRP_Packet import CRP_Packet
 from CRP_Packet_Header import CRP_Packet_Header
+import StringIO
 import sys
 import math
 from collections import deque
@@ -19,10 +20,9 @@ class CRP_Controller:
 
     def clientSideConnect(self, clientSocket, dst_addr):
         clientSocket.connect(dst_addr)
-
-        syn_ack = self.sendSYN(clientSocket)
         clientSocket.seq_num = 1000
         clientSocket.ack_num = 1000
+        syn_ack = self.sendSYN(clientSocket)
 
         self.sendACK(clientSocket)
 
@@ -108,8 +108,9 @@ class CRP_Controller:
         syn_header.src_port = a_socket.src_addr[1]
         syn_header.dst_port = a_socket.dst_addr[1]
         syn_header.syn_flag = 1
+        syn_header.seq_num = a_socket.seq_num
         syn_packet = CRP_Packet(syn_header)
-
+        a_socket.seq_num += 1
         sendTries = 0
         while sendTries < 50:
             a_socket.send(syn_packet)
@@ -146,7 +147,11 @@ class CRP_Controller:
         synack_header.dst_port = a_socket.dst_addr[1]
         synack_header.ack_flag = 1
         synack_header.syn_flag = 1
+        synack_header.seq_num = a_socket.seq_num
+        synack_header.ack_num = a_socket.ack_num
         synack_packet = CRP_Packet(synack_header)
+        a_socket.seq_num += 1
+        a_socket.ack_num += 1
 
         sendTries = 0
         while sendTries < 50:
@@ -177,66 +182,76 @@ class CRP_Controller:
 
     def sendDataPacket(self, a_socket, message):
         #Edit for window size
-        print message
         numPackets = int(math.ceil((float(len(message)) / float(a_socket.MAX_PACKET_SIZE))))
         sendQueue = Queue.Queue()
         ackQueue = []
-        print numPackets
-        for i in range(1,numPackets-1):
-            header = CRP_Packet_Header()
-            header.src_port = a_socket.src_addr[1]
-            header.dst_port = a_socket.dst_addr[1]
-            header.seq_num = a_socket.seq_num
+        sio = StringIO.StringIO(message)
+        i = numPackets
+        print str(i)
+        while i > 0:
+            i -= 1
+            currHeader = CRP_Packet_Header()
+            currHeader.src_port = a_socket.src_addr[1]
+            currHeader.dst_port = a_socket.dst_addr[1]
+            currHeader.seq_num = a_socket.seq_num
+            data = sio.read(a_socket.MAX_PACKET_SIZE)
+            # print "Data: " + str(data)
+            # if i != numPackets - 1:
+            #     # data = message[(i - 1)*a_socket.MAX_PACKET_SIZE:(a_socket.MAX_PACKET_SIZE*i)-1]
+            #     print str(data)
+            # else:
+                # data = message[(i - 1)*a_socket.MAX_PACKET_SIZE:end]
+                # print str(data)
+            packet = CRP_Packet(currHeader, data)
+            # print "Send Data " + str(a_socket.seq_num)
             a_socket.seq_num += 1
-            if i != numPackets - 1:
-                data = message[(i - 1)*a_socket.MAX_PACKET_SIZE:(a_socket.MAX_PACKET_SIZE*i)-1]
-                print str(data)
-            else:
-                data = message[(i - 1)*a_socket.MAX_PACKET_SIZE:end]
-                print str(data)
-            packet = CRP_Packet(header, data)
             sendQueue.put(packet)
         for j in range(sendQueue.qsize()):
             sendTries = 0
             sent = False
-            currPacket = queue.get()
+            currPacket = sendQueue.get()
             while sendTries < 50:
                 try:
                     a_socket.send(currPacket)
                     sent = True
+                    sendTries = 50
                 except Exception as e:
                     if str(e) == "timed out":
                         sendTries += 1
                     else:
                         raise e
             if sent is True:
-                ackQueue.add((currPacket.getHeader().getSeqNum(),currPacket))
-        while len(ackQueue) > 0:
-            try:
-                packet, address = a_socket.recv(a_socket.MAX_PACKET_SIZE)
-                ackQueue.remove(packet.getHeader().getSeqNum())
-            except Exception as e:
-                raise e
+                print "Sent"
+                ackQueue.append((currPacket.getHeader().getSeqNum(),currPacket))
+        # while len(ackQueue) > 0:
+        #     try:
+        #         packet, address = a_socket.recv(a_socket.MAX_PACKET_SIZE)
+        #         ackQueue.remove(packet.getHeader().getSeqNum())
+        #         print len(ackQueue)
+        #     except Exception as e:
+        #         raise e
 
     def recvDataPacket(self, a_socket, buf_size):
         buff = ""
         recvTries = 0
         packet = None
         while recvTries < 50:
-            print buff
             try:
-                packet, address = a_socket.recv(int(buf_size))
+                packet = a_socket.recv(int(buf_size))
+                # print str(packet)
             except Exception as e:
                 if str(e) == "timed out":
                     recvTries += 1
                 #else:
                 #    raise e
-            print "Packet: " + str(packet)
             if packet is not None:
-                print str(packet.getData())
+                # print "Packet is not None"
+                # print str(packet.getData())
+                # print "seqNum " + str(packet.getHeader().getSeqNum())
+                # print "ackNum " + str(a_socket.ack_num)
                 if packet.getHeader().getSeqNum() == a_socket.ack_num:
                     a_socket.ack_num += 1
-                    sendACK(a_socket)
+                    self.sendACK(a_socket)
                     buff += str(packet.getData())
                 elif packet.getHeader().getSeqNum() > a_socket.ack_num:
                     finished = False
@@ -244,14 +259,15 @@ class CRP_Controller:
                         curr = a_socket.rcvQueue.get()
                         if curr[0] == a_socket.ack_num:
                             #Handle data sending
-                            sendACK(a_socket)
+                            self.sendACK(a_socket)
                             buff += str(curr[1].getData())
                         else:
                             if a_socket.ack_num != packet.getHeader().getSeqNum():
                                 a_socket.rcvQueue.put((packet.getHeader().getSeqNum(), packet))
                             else:
-                                sendACK(a_socket)
+                                self.sendACK(a_socket)
                                 buff += str(packet.getData())
                             finished = True
 
+        print buff
         return buff

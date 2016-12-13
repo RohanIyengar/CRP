@@ -10,8 +10,8 @@ class CRP_Packet:
 		self.data = data
 		#Todo check if checksum works properly
 
-		self.crp_header.header_checksum = self.computeChecksum(str(self.crp_header))
 		self.crp_header.data_checksum = self.computeChecksum(str(self.data))
+		# self.crp_header.header_checksum = self.crp_header.computeChecksum()
 
 	def __str__(self):
 		return str(self.crp_header) + "\nData: " + str(self.data)
@@ -22,8 +22,7 @@ class CRP_Packet:
 		return hex(zlib.crc32(value) & 0xffffffff)
 
 	def checkPacket(self):
-		return (self.computeChecksum(self.data) == self.header.data_checksum
-		and self.computeChecksum(self.header) == self.header.header_checksum)
+		return (self.computeChecksum(self.data) == self.crp_header.data_checksum)
 		
 	def getHeader(self):
 		return self.crp_header

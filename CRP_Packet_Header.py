@@ -1,3 +1,4 @@
+import zlib
 class CRP_Packet_Header:
 # This class has all the necessary header fields to be incorporated in a CRP packet
 
@@ -18,12 +19,12 @@ class CRP_Packet_Header:
 		return ("\nPacket information\n" + "Source port: "
 		+ str(self.src_port) + "\nDestination port: " + str(self.dst_port)
 		+ "\nSequence Number: " + str(self.seq_num) + "\nACK Number: "
-		+ str(self.ack_num) + "\nACK Flag: " + str(self.ack_flag) + "RST Flag: "
+		+ str(self.ack_num) + "\nACK Flag: " + str(self.ack_flag) + "\nRST Flag: "
 		+ str(self.rst_flag) + "\nSYN Flag: " + str(self.syn_flag) + "\nFIN Flag: "
 		+ str(self.fin_flag) + "\nWindow Size: " + str(self.window_size)
 		+ "\nHeader Checksum: " + str(self.header_checksum) + "\nData Checksum: "
 		+ str(self.data_checksum))
-	
+
 	def getSrcPort(self):
 		return self.src_port
 

@@ -30,7 +30,7 @@ def listenThread():
 			print "Getting file", file_name
 			with open (file_name, "r") as newFile:
 				fileData = newFile.read()
-			# print str(fileData)
+			print str(fileData)
 			CRP_Controller.sendDataPacket(serverSocket, fileData)
 		if "POST" in str(request):
 			#Todo

@@ -16,9 +16,9 @@ def get(file):
 	print "Download file from Server named " + str(file)
 	sendString = "GET: " + file
 	CRP_Controller.sendDataPacket(clientSocket, sendString)
-	print sendString
+	# print sendString
 	file_response = CRP_Controller.recvDataPacket(clientSocket, clientSocket.MAX_PACKET_SIZE)
-	print "Received file: ", str(file_response)
+	print "Received file: \n", str(file_response)
 
 def post(file):
 	print "Uploading file to Server named " + str(file)
@@ -101,7 +101,6 @@ def main():
 			elif command[0] == "get":
 				file_name = str(command[1])
 				get(file_name)
-				print "Getting file"
 			elif command[0] == "post":
 				file_name= str(command[1])
 				post(file_name)

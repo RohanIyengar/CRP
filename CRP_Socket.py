@@ -71,10 +71,10 @@ class CRP_Socket:
             if self.state != CRP_Socket_State.CONNECTED:
                 raise Exception("Trying to send data without connected socket")
             if self.send_window_size > 0:
-                header.window_size = self.send_window_size - 1
+                packet.crp_header.window_size = self.send_window_size - 1
                 self.send_window_size -= 1
                 packedPacket = pickle.dumps(packet)
-                self.sendList.add(packet.getHeader().getSeqNum())
+                self.sendList.append(packet.getHeader().getSeqNum())
             else:
                 raise Exception("Window full")
             # Are flags really necessary?
@@ -106,7 +106,6 @@ class CRP_Socket:
 
     def recv(self, bufferSize, flags = None):
         received = False
-
         while received == False:
             try:
                 message, destination_addr = self.this_socket.recvfrom(bufferSize)
@@ -114,7 +113,6 @@ class CRP_Socket:
                     print "Packet is empty"
                 else:
                     received = True
-            
                     packet = pickle.loads(message)
                     if not isinstance(packet, CRP_Packet.CRP_Packet):
                         # Handle sending NACK
@@ -122,14 +120,14 @@ class CRP_Socket:
                         received = True
                     else:
                         received = True
-                        if packet.getHeader().getAckFlag == 1:
+                        if packet.getHeader().getAckFlag() == 1:
                             print "Received ACK Packet"
                             self.sendList.remove(packet.getHeader().getAckNum())
-                            self.ack_num += 1
+                            # self.ack_num += 1
                             self.send_window_size += 1
                         elif not packet.checkPacket():
                             # Send NACK
-                            print("Received corrupted packet. Checksums did not match.")
+                            print "Received corrupted packet. Checksums did not match."
                         else:
                             print "Got a good packet"
             except Exception as e:
