@@ -19,6 +19,9 @@ def get(file):
 	# print sendString
 	file_response = CRP_Controller.recvDataPacket(clientSocket, clientSocket.MAX_PACKET_SIZE)
 	print "Received file: \n", str(file_response)
+	newFile = open("recvd.txt", "w")
+	newFile.write(file_response)
+	newFile.close()
 
 def post(file):
 	print "Uploading file to Server named " + str(file)
